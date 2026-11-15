@@ -1,0 +1,6 @@
+node_modules/
+dist/
+.DS_Store
+.claude/
+# local offline copy of the built app (the website is built by GitHub Actions)
+FICSIT Planner.html
