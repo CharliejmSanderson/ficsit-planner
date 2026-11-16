@@ -273,3 +273,15 @@ details.sub summary { cursor: pointer; color: var(--muted); margin-bottom: 6px; 
 .max-value { width: 86px; text-align: right; font-weight: 700; color: var(--good); padding: 6px 8px; background: rgba(108, 192, 112, 0.1); border-radius: 6px; font-variant-numeric: tabular-nums; }
 .max-toggle.on { background: var(--good); border-color: var(--good); color: #1b1d21; font-weight: 700; }
 .ratio { margin-left: 10px; }
+
+.chip.cloud.good { color: var(--good); }
+.chip.cloud.warn { color: var(--warn); border-color: rgba(227, 179, 65, 0.5); }
+.chip.cloud.bad { color: var(--bad); border-color: rgba(229, 83, 75, 0.6); }
+.steps { margin: 6px 0 10px; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+.steps code, .form code { background: var(--panel3); padding: 0 5px; border-radius: 4px; }
+.key-input { flex: 1; font-family: ui-monospace, monospace; }
+.sync-status { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 8px; background: var(--panel2); border: 1px solid var(--border); }
+.sync-status.good { border-color: rgba(108, 192, 112, 0.5); }
+.sync-status.warn { border-color: rgba(227, 179, 65, 0.5); }
+.sync-status.bad { border-color: rgba(229, 83, 75, 0.6); }
+a { color: var(--accent); }

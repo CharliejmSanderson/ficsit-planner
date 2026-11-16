@@ -4,6 +4,7 @@ import { DEFAULT_SETTINGS, newPlan, type Plan, type Settings } from './types';
 
 export type ViewTab = 'graph' | 'tree' | 'items' | 'buildings';
 export type SideTab = 'outputs' | 'inputs' | 'recipes' | 'byproducts';
+export type SettingsTab = 'alts' | 'general' | 'mam' | 'sync';
 
 export interface UIState {
   views: [ViewTab, ViewTab];
@@ -12,12 +13,21 @@ export interface UIState {
   sideWidth: number;
   focusItem: string | null;
   settingsOpen: boolean;
+  settingsTab?: SettingsTab;
+}
+
+export interface SaveData {
+  settings: Settings;
+  plans: Plan[];
+  activeId: string;
 }
 
 interface State {
   settings: Settings;
   plans: Plan[];
   activeId: string;
+  /** when your factories or unlocks last changed (ms); 0 = never */
+  savedAt: number;
   ui: UIState;
   setSettings: (fn: (s: Settings) => void) => void;
   updatePlan: (fn: (p: Plan) => void) => void;
@@ -27,7 +37,17 @@ interface State {
   setActive: (id: string) => void;
   setUI: (patch: Partial<UIState>) => void;
   importAll: (data: { settings: Settings; plans: Plan[] }) => void;
+  /** replace factories and unlocks with a save (from GitHub), keeping its timestamp */
+  applySave: (data: SaveData, savedAt: number) => void;
 }
+
+/** change time that always moves forward, even for two changes in the same millisecond */
+const bump = (st: { savedAt: number }) => Math.max(Date.now(), st.savedAt + 1);
+const normalise = (data: Partial<SaveData>) => {
+  const plans = data.plans?.length ? data.plans.map((p) => ({ ...newPlan(), ...p })) : [newPlan('Factory 1')];
+  const activeId = plans.some((p) => p.id === data.activeId) ? data.activeId! : plans[0].id;
+  return { settings: { ...DEFAULT_SETTINGS, ...(data.settings ?? {}) }, plans, activeId };
+};
 
 const first = newPlan('Factory 1');
 
@@ -39,6 +59,7 @@ export const useStore = create<State>()(
       settings: DEFAULT_SETTINGS,
       plans: [first],
       activeId: first.id,
+      savedAt: 0,
       ui: {
         views: ['graph', 'tree'],
         split: false,
@@ -51,7 +72,7 @@ export const useStore = create<State>()(
         set((st) => {
           const s = clone(st.settings);
           fn(s);
-          return { settings: s };
+          return { settings: s, savedAt: bump(st) };
         }),
       updatePlan: (fn) =>
         set((st) => ({
@@ -61,33 +82,31 @@ export const useStore = create<State>()(
             fn(c);
             return c;
           }),
+          savedAt: bump(st),
         })),
       addPlan: () =>
         set((st) => {
           const p = newPlan(`Factory ${st.plans.length + 1}`);
-          return { plans: [...st.plans, p], activeId: p.id };
+          return { plans: [...st.plans, p], activeId: p.id, savedAt: bump(st) };
         }),
       duplicatePlan: () =>
         set((st) => {
           const cur = st.plans.find((p) => p.id === st.activeId);
           if (!cur) return {};
           const p = { ...clone(cur), id: newPlan().id, name: cur.name + ' (copy)' };
-          return { plans: [...st.plans, p], activeId: p.id };
+          return { plans: [...st.plans, p], activeId: p.id, savedAt: bump(st) };
         }),
       removePlan: (id) =>
         set((st) => {
           let plans = st.plans.filter((p) => p.id !== id);
           if (!plans.length) plans = [newPlan('Factory 1')];
           const activeId = st.activeId === id ? plans[0].id : st.activeId;
-          return { plans, activeId };
+          return { plans, activeId, savedAt: bump(st) };
         }),
       setActive: (id) => set({ activeId: id }),
       setUI: (patch) => set((st) => ({ ui: { ...st.ui, ...patch } })),
-      importAll: (data) =>
-        set(() => {
-          const plans = data.plans?.length ? data.plans.map((p) => ({ ...newPlan(), ...p })) : [newPlan('Factory 1')];
-          return { settings: { ...DEFAULT_SETTINGS, ...data.settings }, plans, activeId: plans[0].id };
-        }),
+      importAll: (data) => set((st) => ({ ...normalise(data), savedAt: bump(st) })),
+      applySave: (data, savedAt) => set(() => ({ ...normalise(data), savedAt })),
     }),
     {
       name: 'ficsit-planner-v1',
@@ -106,7 +125,13 @@ export const useStore = create<State>()(
           };
         }
       }),
-      partialize: (st) => ({ settings: st.settings, plans: st.plans, activeId: st.activeId, ui: { ...st.ui, settingsOpen: false, focusItem: null } }),
+      partialize: (st) => ({
+        settings: st.settings,
+        plans: st.plans,
+        activeId: st.activeId,
+        savedAt: st.savedAt,
+        ui: { ...st.ui, settingsOpen: false, focusItem: null },
+      }),
       merge: (persisted: any, current) => {
         const p = persisted ?? {};
         return {
@@ -114,6 +139,7 @@ export const useStore = create<State>()(
           ...p,
           settings: { ...DEFAULT_SETTINGS, ...(p.settings ?? {}) },
           plans: (p.plans ?? current.plans).map((pl: Plan) => ({ ...newPlan(), ...pl })),
+          savedAt: typeof p.savedAt === 'number' ? p.savedAt : 0,
           ui: { ...current.ui, ...(p.ui ?? {}) },
         };
       },

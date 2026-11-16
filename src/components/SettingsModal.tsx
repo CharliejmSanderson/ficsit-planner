@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
-import { useStore } from '../lib/store';
+import { useStore, type SettingsTab } from '../lib/store';
+import { useCloud, connect, disconnect, saveNow, sync, restoreBackup, dismissBackup, REPO } from '../lib/cloud';
 import { RECIPES, BUILDINGS, EXTRACTORS, itemName, type Purity } from '../lib/gamedata';
 import { ItemIcon, BuildingIcon } from './ItemIcon';
 import { RecipeLine } from './side/RecipesPanel';
@@ -13,7 +14,8 @@ const MAM = Object.values(RECIPES)
 
 export function SettingsModal() {
   const { settings, setSettings, setUI, plans, importAll } = useStore();
-  const [tab, setTab] = useState<'alts' | 'mam' | 'general' | 'backup'>('alts');
+  const initialTab = useStore((s) => s.ui.settingsTab) ?? 'alts';
+  const [tab, setTab] = useState<SettingsTab>(initialTab);
   const [q, setQ] = useState('');
   const [onlyUnlocked, setOnlyUnlocked] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -57,8 +59,8 @@ export function SettingsModal() {
           <button className={'tab' + (tab === 'mam' ? ' active' : '')} onClick={() => setTab('mam')}>
             MAM research
           </button>
-          <button className={'tab' + (tab === 'backup' ? ' active' : '')} onClick={() => setTab('backup')}>
-            Backup
+          <button className={'tab' + (tab === 'sync' ? ' active' : '')} onClick={() => setTab('sync')}>
+            Save & sync
           </button>
         </div>
         <div className="modal-body">
@@ -187,11 +189,11 @@ export function SettingsModal() {
               </div>
             </>
           )}
-          {tab === 'backup' && (
+          {tab === 'sync' && (
             <div className="form">
-              <p className="small">
-                Your factories and unlocks are saved in this browser automatically. Export a backup file to keep them safe or move them to another computer.
-              </p>
+              <SyncPanel />
+              <h3>Backup file</h3>
+              <p className="small muted">Download a copy of your factories and unlocks, or load one back in.</p>
               <div className="row">
                 <button className="btn primary" onClick={exportData}>
                   Export backup
@@ -223,5 +225,133 @@ export function SettingsModal() {
         </div>
       </div>
     </div>
+  );
+}
+
+function SyncPanel() {
+  const cloud = useCloud();
+  const [key, setKey] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const when = cloud.lastSaved ? new Date(cloud.lastSaved).toLocaleString() : null;
+  const repoUrl = `https://github.com/${REPO.owner}/${REPO.name}/blob/${REPO.branch}/${REPO.path}`;
+
+  const tone = cloud.state === 'error' ? 'bad' : cloud.connected && cloud.state !== 'offline' ? 'good' : 'warn';
+  let headline: string;
+  if (cloud.state === 'loading') headline = 'Loading your save from GitHub…';
+  else if (cloud.state === 'error') headline = cloud.message ?? 'Something went wrong talking to GitHub.';
+  else if (cloud.state === 'offline') headline = 'Can’t reach GitHub right now. Your changes are kept in this browser and will save when you’re back online.';
+  else if (cloud.connected) headline = `Auto-save is on. Every change saves to GitHub a few seconds after you make it.${when ? ` Last saved ${when}.` : ''}`;
+  else headline = 'This browser loads your saved factories from GitHub, but changes made here aren’t saved there yet.';
+
+  return (
+    <>
+      <div className={'sync-status ' + tone}>
+        <span>{tone === 'good' ? '☁' : tone === 'bad' ? '⚠' : '☁'}</span>
+        <span className="small">{headline}</span>
+      </div>
+
+      {cloud.hasBackup && (
+        <div className="callout">
+          <div className="small">
+            When this browser loaded your GitHub save, it had different factories of its own. They’re kept here in case you want them back.
+          </div>
+          <div className="row" style={{ marginTop: 6 }}>
+            <button
+              className="btn small"
+              onClick={() => {
+                if (confirm('Replace your factories and unlocks with what this browser had before? That will also become your saved version.')) restoreBackup();
+              }}
+            >
+              Restore this browser’s old factories
+            </button>
+            <button className="btn small" onClick={dismissBackup}>
+              Discard them
+            </button>
+          </div>
+        </div>
+      )}
+
+      {cloud.connected ? (
+        <div className="row wrap">
+          <button className="btn" disabled={busy} onClick={async () => (setBusy(true), await saveNow(), setBusy(false))}>
+            Save now
+          </button>
+          <button className="btn" disabled={busy} onClick={async () => (setBusy(true), await sync(), setBusy(false))}>
+            Reload from GitHub
+          </button>
+          <button
+            className="btn"
+            onClick={() => {
+              if (confirm('Stop saving from this browser? Your save on GitHub stays as it is.')) disconnect();
+            }}
+          >
+            Disconnect this browser
+          </button>
+        </div>
+      ) : (
+        <>
+          <h3>Turn on auto-save (one-time setup)</h3>
+          <ol className="steps small">
+            <li>
+              Open{' '}
+              <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noreferrer">
+                GitHub → new fine-grained token
+              </a>{' '}
+              (you may need to sign in).
+            </li>
+            <li>
+              <b>Token name:</b> <code>FICSIT Planner</code>. <b>Expiration:</b> the longest it offers. You’ll make a new one when it runs out.
+            </li>
+            <li>
+              <b>Repository access:</b> “Only select repositories” → <code>{REPO.name}</code>.
+            </li>
+            <li>
+              <b>Permissions:</b> add <b>Contents</b> and set it to <b>Read and write</b>. Leave everything else alone.
+            </li>
+            <li>Click <b>Generate token</b>, copy it, and paste it below.</li>
+          </ol>
+          <div className="row">
+            <input
+              className="key-input"
+              type="password"
+              autoComplete="off"
+              placeholder="github_pat_…"
+              value={key}
+              onChange={(e) => setKey(e.target.value)}
+            />
+            <button
+              className="btn primary"
+              disabled={busy || !key.trim()}
+              onClick={async () => {
+                setBusy(true);
+                setErr(null);
+                try {
+                  await connect(key);
+                  setKey('');
+                } catch (e) {
+                  setErr((e as Error).message);
+                }
+                setBusy(false);
+              }}
+            >
+              {busy ? 'Connecting…' : 'Connect'}
+            </button>
+          </div>
+          {err && <div className="small bad-text">{err}</div>}
+          <p className="small muted">
+            The key is kept only in this browser and can only change files in the {REPO.name} repo. If this browser already has factories and GitHub has none,
+            they’re uploaded; if GitHub has a newer save, it’s loaded.
+          </p>
+        </>
+      )}
+      <p className="small muted">
+        Your save is a file in your repo:{' '}
+        <a href={repoUrl} target="_blank" rel="noreferrer">
+          {REPO.branch}/{REPO.path}
+        </a>
+        . The repo is public, so anyone with the link could see your factory plans (nothing else is in it).
+      </p>
+    </>
   );
 }

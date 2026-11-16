@@ -13,6 +13,7 @@ import { InputsPanel } from './components/side/InputsPanel';
 import { RecipesPanel } from './components/side/RecipesPanel';
 import { ByproductsPanel } from './components/side/ByproductsPanel';
 import { SettingsModal } from './components/SettingsModal';
+import { useCloud, type CloudState } from './lib/cloud';
 
 const VIEW_TABS: { id: ViewTab; label: string; short: string; icon: string }[] = [
   { id: 'graph', label: 'Network graph', short: 'Graph', icon: '⛓' },
@@ -89,11 +90,33 @@ function Header() {
         </button>
       </nav>
       <div className="header-right">
-        <button className="chip" onClick={() => setUI({ settingsOpen: true })} title="Tier, unlocked alternates, MAM research, clock precision">
+        <CloudChip />
+        <button className="chip" onClick={() => setUI({ settingsOpen: true, settingsTab: 'alts' })} title="Tier, unlocked alternates, MAM research, clock precision">
           Tier {settings.tier} · {unlocked} alternate{unlocked === 1 ? '' : 's'} · ⚙ Unlocks & settings
         </button>
       </div>
     </header>
+  );
+}
+
+function CloudChip() {
+  const cloud = useCloud();
+  const setUI = useStore((s) => s.setUI);
+  const time = cloud.lastSaved ? new Date(cloud.lastSaved).toLocaleString() : null;
+  const view: Record<CloudState, [string, string, string]> = {
+    loading: ['☁ Loading save…', '', 'Loading your save from GitHub'],
+    saving: ['☁ Saving…', '', 'Saving to GitHub'],
+    unsaved: ['☁ Saving soon…', '', 'Your change will save to GitHub in a few seconds'],
+    saved: ['☁ Saved', 'good', time ? `Saved to GitHub ${time}` : 'Saved to GitHub'],
+    readonly: ['☁ Not saving', 'warn', 'This browser loads your GitHub save but can’t save changes. Click to connect it.'],
+    offline: ['☁ Offline', 'warn', 'Can’t reach GitHub. Changes are kept in this browser and will save when you’re back online.'],
+    error: ['⚠ Save failed', 'bad', cloud.message ?? 'Saving to GitHub failed'],
+  };
+  const [label, cls, title] = view[cloud.state];
+  return (
+    <button className={'chip cloud ' + cls} title={title} onClick={() => setUI({ settingsOpen: true, settingsTab: 'sync' })}>
+      {label}
+    </button>
   );
 }
 

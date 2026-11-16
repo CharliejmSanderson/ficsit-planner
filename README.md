@@ -7,8 +7,15 @@ A personal Satisfactory factory planner (game version 1.2.x, recipes unchanged s
 **https://charliejmsanderson.github.io/ficsit-planner/**
 
 Every push to `main` rebuilds and redeploys the site automatically (GitHub Actions → Pages), so the link always has
-the latest version. Your factories and unlocked alternates are saved in your browser, not in this repo.
-Use *Unlocks & settings → Backup* to export a copy or move them to another browser.
+the latest version.
+
+### Saving
+
+Your factories and unlocked recipes auto-save to [`save.json` on the `saves` branch](../../blob/saves/save.json).
+Every browser loads that file when the planner opens. A browser you've connected with a GitHub access key
+(*Unlocks & settings → Save & sync*) also writes each change back a few seconds after you make it. The key needs
+access to this repo only, with **Contents: Read and write**. It stays in that browser and is never committed.
+Saves go to the `saves` branch, so they don't trigger a redeploy. *Save & sync* also has backup export/import.
 
 For offline use, `npm run build` writes a single self-contained file to `dist/index.html`.
 
