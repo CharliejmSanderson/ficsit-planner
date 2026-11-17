@@ -1,7 +1,7 @@
 {
  "app": "ficsit-planner",
  "version": 1,
- "updatedAt": 1794897982002,
+ "updatedAt": 1794898037320,
  "data": {
   "settings": {
    "tier": 8,
@@ -152,6 +152,14 @@
    }
   ],
   "activeId": "mwkbab394rd84",
-  "notes": []
+  "notes": [
+   {
+    "id": "mwkby1l94wein",
+    "title": "",
+    "text": "",
+    "createdAt": 1794898032525,
+    "updatedAt": 1794898037320
+   }
+  ]
  }
 }
