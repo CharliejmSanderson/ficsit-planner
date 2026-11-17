@@ -1,7 +1,7 @@
 {
  "app": "ficsit-planner",
  "version": 1,
- "updatedAt": 1794926029724,
+ "updatedAt": 1794926049576,
  "data": {
   "settings": {
    "tier": 8,
@@ -156,9 +156,9 @@
    {
     "id": "mwks8en95lh3w",
     "title": "",
-    "text": "Split the EIB and stators in uranium ",
+    "text": "Split the EIB and stators in uranium train",
     "createdAt": 1794925389861,
-    "updatedAt": 1794926029724
+    "updatedAt": 1794926049576
    },
    {
     "id": "mwkby1l94wein",
