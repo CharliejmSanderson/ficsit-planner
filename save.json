@@ -1,7 +1,7 @@
 {
  "app": "ficsit-planner",
  "version": 1,
- "updatedAt": 1794898197352,
+ "updatedAt": 1794898222628,
  "data": {
   "settings": {
    "tier": 8,
@@ -156,9 +156,9 @@
    {
     "id": "mwkby1l94wein",
     "title": "Farms still to make",
-    "text": "Crystal Oscilator\nTurbo motor\nFused Modular Frame\nCooling system\nHeat sink\n\n\nThe three space elevator parts",
+    "text": "Crystal Oscilator\nTurbo motor\nFused Modular Frame\nCooling system\nHeat sink\nBatteries?\n\nThe three space elevator parts",
     "createdAt": 1794898032525,
-    "updatedAt": 1794898197352
+    "updatedAt": 1794898222628
    }
   ]
  }
