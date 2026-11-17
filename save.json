@@ -1,6 +1,157 @@
 {
  "app": "ficsit-planner",
  "version": 1,
- "updatedAt": 0,
- "data": null
+ "updatedAt": 1794897982002,
+ "data": {
+  "settings": {
+   "tier": 8,
+   "unlockedAlts": {
+    "Recipe_Alternate_WetConcrete_C": true,
+    "Recipe_Alternate_SteelBeam_Molded_C": true,
+    "Recipe_Alternate_IngotSteel_1_C": true
+   },
+   "mamOff": {},
+   "clockDecimals": 2,
+   "minerId": "Desc_MinerMk3_C",
+   "purity": "normal",
+   "minerClock": 250
+  },
+  "plans": [
+   {
+    "id": "mwhrm0q00eedj",
+    "name": "Factory 1",
+    "targets": [
+     {
+      "id": "mwhwi1p52hra5",
+      "item": "Desc_NuclearFuelRod_C",
+      "rate": 1,
+      "max": true
+     }
+    ],
+    "inputs": [
+     {
+      "id": "mwhwic873etcr",
+      "item": "Desc_OreUranium_C",
+      "rate": 600
+     },
+     {
+      "id": "mwhwlm7c4h277",
+      "item": "Desc_SteelPlateReinforced_C",
+      "rate": 60
+     },
+     {
+      "id": "mwhwlswh5pll5",
+      "item": "Desc_CircuitBoardHighSpeed_C",
+      "rate": 30
+     },
+     {
+      "id": "mwhwm1ur6l190",
+      "item": "Desc_Stator_C",
+      "rate": 55
+     },
+     {
+      "id": "mwhwmnse7wl0b",
+      "item": "Desc_SulfuricAcid_C",
+      "rate": 1000
+     },
+     {
+      "id": "mwhworzm8kfmi",
+      "item": "Desc_Cement_C",
+      "rate": 180
+     }
+    ],
+    "nodes": [],
+    "objective": "resources",
+    "recipeChoice": {
+     "Desc_SteelPlate_C": [
+      "Recipe_SteelBeam_C",
+      "Recipe_Alternate_SteelBeam_Molded_C"
+     ],
+     "Desc_Cement_C": [
+      "Recipe_Concrete_C",
+      "Recipe_Alternate_WetConcrete_C"
+     ],
+     "Desc_SteelIngot_C": [
+      "Recipe_IngotSteel_C",
+      "Recipe_Alternate_IngotSteel_1_C"
+     ]
+    },
+    "reuse": {
+     "Desc_SulfuricAcid_C": true
+    },
+    "sloops": {},
+    "selfPower": false,
+    "allowConverter": false,
+    "allowUnpackage": false
+   },
+   {
+    "id": "mwkb9zmy2nw10",
+    "name": "Factory 2",
+    "targets": [
+     {
+      "id": "mwkba7v63we7l",
+      "item": "Desc_MotorLightweight_C",
+      "rate": 10
+     }
+    ],
+    "inputs": [],
+    "nodes": [],
+    "objective": "resources",
+    "recipeChoice": {},
+    "reuse": {},
+    "sloops": {},
+    "selfPower": false,
+    "allowConverter": false,
+    "allowUnpackage": false
+   },
+   {
+    "id": "mwkbab394rd84",
+    "name": "Factory 3",
+    "targets": [
+     {
+      "id": "mwkbal415i22o",
+      "item": "Desc_CrystalOscillator_C",
+      "rate": 1,
+      "max": true
+     }
+    ],
+    "inputs": [],
+    "nodes": [
+     {
+      "id": "mwkbc0k76zkxv",
+      "resource": "Desc_OreIron_C",
+      "purity": "normal",
+      "extractor": "Desc_MinerMk3_C",
+      "clock": 250,
+      "count": 1
+     },
+     {
+      "id": "mwkbcnk8838ad",
+      "resource": "Desc_OreCopper_C",
+      "purity": "normal",
+      "extractor": "Desc_MinerMk3_C",
+      "clock": 250,
+      "count": 1
+     },
+     {
+      "id": "mwkbcznj9senq",
+      "resource": "Desc_RawQuartz_C",
+      "purity": "normal",
+      "extractor": "Desc_MinerMk3_C",
+      "clock": 250,
+      "count": 1
+     }
+    ],
+    "objective": "resources",
+    "recipeChoice": {},
+    "reuse": {},
+    "sloops": {},
+    "selfPower": false,
+    "allowConverter": false,
+    "allowUnpackage": false
+   }
+  ],
+  "activeId": "mwkbab394rd84",
+  "notes": []
+ }
 }
