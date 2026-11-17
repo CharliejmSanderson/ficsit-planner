@@ -1,7 +1,7 @@
 {
  "app": "ficsit-planner",
  "version": 1,
- "updatedAt": 1794925976886,
+ "updatedAt": 1794925993912,
  "data": {
   "settings": {
    "tier": 8,
@@ -158,7 +158,7 @@
     "title": "",
     "text": "Split the ",
     "createdAt": 1794925389861,
-    "updatedAt": 1794925976886
+    "updatedAt": 1794925993912
    },
    {
     "id": "mwkby1l94wein",
