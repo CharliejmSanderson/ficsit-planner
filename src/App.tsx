@@ -15,6 +15,7 @@ import { ByproductsPanel } from './components/side/ByproductsPanel';
 import { SettingsModal } from './components/SettingsModal';
 import { useCloud, saveNow, type CloudState } from './lib/cloud';
 import { NotesPage } from './components/NotesPage';
+import { Calculator } from './components/Calculator';
 import { useUpdateAvailable, BUILD_TIME } from './lib/version';
 
 const VIEW_TABS: { id: ViewTab; label: string; short: string; icon: string }[] = [
@@ -35,6 +36,7 @@ export default function App() {
         <Header />
         {page === 'notes' ? <NotesPage /> : <Main />}
       </div>
+      <Calculator />
       {settingsOpen && <SettingsModal />}
     </SolutionProvider>
   );
@@ -46,6 +48,7 @@ function Header() {
   const unlocked = Object.values(settings.unlockedAlts).filter(Boolean).length;
   const page = useStore((s) => s.ui.page) ?? 'planner';
   const noteCount = useStore((s) => s.notes.length);
+  const calcOpen = useStore((s) => s.ui.calcOpen ?? false);
   const update = useUpdateAvailable();
   return (
     <header className="header">
@@ -121,6 +124,9 @@ function Header() {
           title="Your notes"
         >
           📝 Notes{noteCount ? ` (${noteCount})` : ''}
+        </button>
+        <button className={'chip notes-btn' + (calcOpen ? ' on' : '')} onClick={() => setUI({ calcOpen: !calcOpen })} title="Open a calculator">
+          🧮 Calculator
         </button>
         <CloudChip />
         <button className="chip" onClick={() => setUI({ settingsOpen: true, settingsTab: 'alts' })} title="Tier, unlocked alternates, MAM research, clock precision">

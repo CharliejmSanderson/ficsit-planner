@@ -16,6 +16,8 @@ export interface UIState {
   settingsTab?: SettingsTab;
   page?: 'planner' | 'notes';
   activeNote?: string | null;
+  calcOpen?: boolean;
+  calcAt?: { left: number; bottom: number };
 }
 
 export interface SaveData {

@@ -14,6 +14,13 @@ the latest version. An open tab notices a newer version and shows a **New versio
 The **📝 Notes** button opens a notes page: any number of notes with a title and text, searchable, saved as
 you type. Notes are part of your save, so they auto-save to GitHub along with your factories.
 
+### Calculator
+
+The **🧮 Calculator** button opens a small calculator window you can drag anywhere; it stays open while you
+switch factories or pages. Type a sum and press Enter, or use its buttons. It understands `× ÷ ^ ( )`,
+percent like a normal calculator (`60 × 250%` = 150, `200 + 10%` = 220), `ans` for the last answer,
+`sqrt()`, `round()`, `ceil()` and `floor()`. Click an earlier answer to reuse it. Esc clears, then closes.
+
 ### Saving
 
 Your factories, unlocked recipes and notes auto-save to [`save.json` on the `saves` branch](../../blob/saves/save.json).
