@@ -1,7 +1,7 @@
 {
  "app": "ficsit-planner",
  "version": 1,
- "updatedAt": 1794898222628,
+ "updatedAt": 1794925389861,
  "data": {
   "settings": {
    "tier": 8,
@@ -153,6 +153,13 @@
   ],
   "activeId": "mwkbab394rd84",
   "notes": [
+   {
+    "id": "mwks8en95lh3w",
+    "title": "",
+    "text": "",
+    "createdAt": 1794925389861,
+    "updatedAt": 1794925389861
+   },
    {
     "id": "mwkby1l94wein",
     "title": "Farms still to make",
