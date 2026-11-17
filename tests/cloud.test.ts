@@ -141,4 +141,20 @@ describe('GitHub auto-save', () => {
     await cloud.sync();
     expect(useStore.getState().plans[0].name).toBe('Raw');
   });
+
+  it('notes are saved to GitHub and loaded in another browser', async () => {
+    const { file, seed } = fakeGitHub();
+    seed({ app: 'ficsit-planner', version: 1, updatedAt: 0, data: null });
+    const id = useStore.getState().addNote();
+    useStore.getState().updateNote(id, { title: 'Next build', text: 'Steel beams by the river' });
+    await cloud.connect('good');
+    expect(file().data.notes[0].text).toBe('Steel beams by the river');
+
+    // a different browser with nothing saved loads them
+    const saved = file();
+    resetBrowser();
+    seed(saved);
+    await cloud.sync();
+    expect(useStore.getState().notes[0].title).toBe('Next build');
+  });
 });

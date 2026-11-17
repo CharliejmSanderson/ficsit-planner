@@ -137,7 +137,7 @@ export async function readRemote(key: string | null): Promise<Remote> {
 
 export async function writeRemote(key: string, file: SaveFile, sha: string | null, keepalive = false): Promise<string> {
   const body = JSON.stringify({
-    message: `Auto-save: ${file.data?.plans.length ?? 0} factories, ${Object.keys(file.data?.settings.unlockedAlts ?? {}).length} alternates`,
+    message: `Auto-save: ${file.data?.plans.length ?? 0} factories, ${Object.keys(file.data?.settings.unlockedAlts ?? {}).length} alternates, ${file.data?.notes?.length ?? 0} notes`,
     content: toB64(JSON.stringify(file, null, 1)),
     branch: REPO.branch,
     ...(sha ? { sha } : {}),
@@ -165,11 +165,18 @@ let started = false;
 
 function currentSave(): SaveFile {
   const st = useStore.getState();
-  return { app: 'ficsit-planner', version: 1, updatedAt: st.savedAt, data: { settings: st.settings, plans: st.plans, activeId: st.activeId } };
+  return {
+    app: 'ficsit-planner',
+    version: 1,
+    updatedAt: st.savedAt,
+    data: { settings: st.settings, plans: st.plans, activeId: st.activeId, notes: st.notes },
+  };
 }
 
 const hasContent = (d: SaveData) =>
-  d.plans.some((p) => p.targets.length || p.inputs.length || p.nodes.length) || Object.keys(d.settings.unlockedAlts).length > 0;
+  d.plans.some((p) => p.targets.length || p.inputs.length || p.nodes.length) ||
+  Object.keys(d.settings.unlockedAlts).length > 0 ||
+  (d.notes?.length ?? 0) > 0;
 
 function applyRemote(file: SaveFile) {
   const st = useStore.getState();

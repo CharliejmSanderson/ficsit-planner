@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { DEFAULT_SETTINGS, newPlan, type Plan, type Settings } from './types';
+import { DEFAULT_SETTINGS, newPlan, uid, type Note, type Plan, type Settings } from './types';
 
 export type ViewTab = 'graph' | 'tree' | 'items' | 'buildings';
 export type SideTab = 'outputs' | 'inputs' | 'recipes' | 'byproducts';
@@ -14,12 +14,15 @@ export interface UIState {
   focusItem: string | null;
   settingsOpen: boolean;
   settingsTab?: SettingsTab;
+  page?: 'planner' | 'notes';
+  activeNote?: string | null;
 }
 
 export interface SaveData {
   settings: Settings;
   plans: Plan[];
   activeId: string;
+  notes?: Note[];
 }
 
 interface State {
@@ -28,6 +31,7 @@ interface State {
   activeId: string;
   /** when your factories or unlocks last changed (ms); 0 = never */
   savedAt: number;
+  notes: Note[];
   ui: UIState;
   setSettings: (fn: (s: Settings) => void) => void;
   updatePlan: (fn: (p: Plan) => void) => void;
@@ -36,7 +40,10 @@ interface State {
   removePlan: (id: string) => void;
   setActive: (id: string) => void;
   setUI: (patch: Partial<UIState>) => void;
-  importAll: (data: { settings: Settings; plans: Plan[] }) => void;
+  importAll: (data: { settings: Settings; plans: Plan[]; notes?: Note[] }) => void;
+  addNote: () => string;
+  updateNote: (id: string, patch: Partial<Pick<Note, 'title' | 'text'>>) => void;
+  deleteNote: (id: string) => void;
   /** replace factories and unlocks with a save (from GitHub), keeping its timestamp */
   applySave: (data: SaveData, savedAt: number) => void;
 }
@@ -46,7 +53,8 @@ const bump = (st: { savedAt: number }) => Math.max(Date.now(), st.savedAt + 1);
 const normalise = (data: Partial<SaveData>) => {
   const plans = data.plans?.length ? data.plans.map((p) => ({ ...newPlan(), ...p })) : [newPlan('Factory 1')];
   const activeId = plans.some((p) => p.id === data.activeId) ? data.activeId! : plans[0].id;
-  return { settings: { ...DEFAULT_SETTINGS, ...(data.settings ?? {}) }, plans, activeId };
+  const notes = Array.isArray(data.notes) ? data.notes.filter((n) => n && n.id) : [];
+  return { settings: { ...DEFAULT_SETTINGS, ...(data.settings ?? {}) }, plans, activeId, notes };
 };
 
 const first = newPlan('Factory 1');
@@ -60,6 +68,7 @@ export const useStore = create<State>()(
       plans: [first],
       activeId: first.id,
       savedAt: 0,
+      notes: [],
       ui: {
         views: ['graph', 'tree'],
         split: false,
@@ -107,6 +116,18 @@ export const useStore = create<State>()(
       setUI: (patch) => set((st) => ({ ui: { ...st.ui, ...patch } })),
       importAll: (data) => set((st) => ({ ...normalise(data), savedAt: bump(st) })),
       applySave: (data, savedAt) => set(() => ({ ...normalise(data), savedAt })),
+      addNote: () => {
+        const t = Date.now();
+        const note: Note = { id: uid(), title: '', text: '', createdAt: t, updatedAt: t };
+        set((st) => ({ notes: [note, ...st.notes], savedAt: bump(st) }));
+        return note.id;
+      },
+      updateNote: (id, patch) =>
+        set((st) => ({
+          notes: st.notes.map((n) => (n.id === id ? { ...n, ...patch, updatedAt: Date.now() } : n)),
+          savedAt: bump(st),
+        })),
+      deleteNote: (id) => set((st) => ({ notes: st.notes.filter((n) => n.id !== id), savedAt: bump(st) })),
     }),
     {
       name: 'ficsit-planner-v1',
@@ -130,6 +151,7 @@ export const useStore = create<State>()(
         plans: st.plans,
         activeId: st.activeId,
         savedAt: st.savedAt,
+        notes: st.notes,
         ui: { ...st.ui, settingsOpen: false, focusItem: null },
       }),
       merge: (persisted: any, current) => {
@@ -140,6 +162,7 @@ export const useStore = create<State>()(
           settings: { ...DEFAULT_SETTINGS, ...(p.settings ?? {}) },
           plans: (p.plans ?? current.plans).map((pl: Plan) => ({ ...newPlan(), ...pl })),
           savedAt: typeof p.savedAt === 'number' ? p.savedAt : 0,
+          notes: Array.isArray(p.notes) ? p.notes : [],
           ui: { ...current.ui, ...(p.ui ?? {}) },
         };
       },

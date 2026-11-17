@@ -13,7 +13,7 @@ const MAM = Object.values(RECIPES)
   .sort((a, b) => a.unlockLabel.localeCompare(b.unlockLabel) || a.name.localeCompare(b.name));
 
 export function SettingsModal() {
-  const { settings, setSettings, setUI, plans, importAll } = useStore();
+  const { settings, setSettings, setUI, plans, notes, importAll } = useStore();
   const initialTab = useStore((s) => s.ui.settingsTab) ?? 'alts';
   const [tab, setTab] = useState<SettingsTab>(initialTab);
   const [q, setQ] = useState('');
@@ -32,7 +32,7 @@ export function SettingsModal() {
   const unlockedCount = ALTS.filter((r) => settings.unlockedAlts[r.id]).length;
 
   const exportData = () => {
-    const blob = new Blob([JSON.stringify({ app: 'ficsit-planner', version: 1, settings, plans }, null, 2)], { type: 'application/json' });
+    const blob = new Blob([JSON.stringify({ app: 'ficsit-planner', version: 1, settings, plans, notes }, null, 2)], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = `ficsit-planner-${new Date().toISOString().slice(0, 10)}.json`;

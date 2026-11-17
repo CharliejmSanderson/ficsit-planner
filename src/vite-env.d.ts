@@ -3,3 +3,4 @@ declare module 'virtual:highs-wasm' {
   const b64: string;
   export default b64;
 }
+declare const __BUILD_ID__: string;

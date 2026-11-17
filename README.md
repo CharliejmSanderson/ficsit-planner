@@ -7,11 +7,16 @@ A personal Satisfactory factory planner (game version 1.2.x, recipes unchanged s
 **https://charliejmsanderson.github.io/ficsit-planner/**
 
 Every push to `main` rebuilds and redeploys the site automatically (GitHub Actions → Pages), so the link always has
-the latest version.
+the latest version. An open tab notices a newer version and shows a **New version: reload** button.
+
+### Notes
+
+The **📝 Notes** button opens a notes page: any number of notes with a title and text, searchable, saved as
+you type. Notes are part of your save, so they auto-save to GitHub along with your factories.
 
 ### Saving
 
-Your factories and unlocked recipes auto-save to [`save.json` on the `saves` branch](../../blob/saves/save.json).
+Your factories, unlocked recipes and notes auto-save to [`save.json` on the `saves` branch](../../blob/saves/save.json).
 Every browser loads that file when the planner opens. A browser you've connected with a GitHub access key
 (*Unlocks & settings → Save & sync*) also writes each change back a few seconds after you make it. The key needs
 access to this repo only, with **Contents: Read and write**. It stays in that browser and is never committed.

@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react';
 import { viteSingleFile } from 'vite-plugin-singlefile';
 import fs from 'node:fs';
 import { createRequire } from 'node:module';
+import { execSync } from 'node:child_process';
 
 const require = createRequire(import.meta.url);
 
@@ -38,8 +39,30 @@ function stripHighsWasmUrl(): Plugin {
   };
 }
 
+// Identifies this build. The app compares it with the deployed version.json to offer a reload when you're out of date.
+const sha = (() => {
+  if (process.env.GITHUB_SHA) return process.env.GITHUB_SHA.slice(0, 7);
+  try {
+    return execSync('git rev-parse --short HEAD', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
+  } catch {
+    return 'local';
+  }
+})();
+const BUILD_ID = `${new Date().toISOString()}+${sha}`;
+
+function versionFile(): Plugin {
+  return {
+    name: 'version-file',
+    apply: 'build',
+    generateBundle() {
+      this.emitFile({ type: 'asset', fileName: 'version.json', source: JSON.stringify({ build: BUILD_ID }) });
+    },
+  };
+}
+
 export default defineConfig({
-  plugins: [stripHighsWasmUrl(), react(), highsWasmB64(), viteSingleFile()],
+  define: { __BUILD_ID__: JSON.stringify(BUILD_ID) },
+  plugins: [stripHighsWasmUrl(), react(), highsWasmB64(), viteSingleFile(), versionFile()],
   worker: { format: 'iife', plugins: () => [stripHighsWasmUrl()] },
   build: { chunkSizeWarningLimit: 20000, assetsInlineLimit: 100000000 },
 });

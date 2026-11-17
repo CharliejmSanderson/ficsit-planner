@@ -53,6 +53,14 @@ export interface Plan {
   allowUnpackage: boolean;
 }
 
+export interface Note {
+  id: string;
+  title: string;
+  text: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
 export interface Settings {
   /** Highest milestone tier you have fully unlocked */
   tier: number;

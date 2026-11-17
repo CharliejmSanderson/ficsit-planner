@@ -13,7 +13,9 @@ import { InputsPanel } from './components/side/InputsPanel';
 import { RecipesPanel } from './components/side/RecipesPanel';
 import { ByproductsPanel } from './components/side/ByproductsPanel';
 import { SettingsModal } from './components/SettingsModal';
-import { useCloud, type CloudState } from './lib/cloud';
+import { useCloud, saveNow, type CloudState } from './lib/cloud';
+import { NotesPage } from './components/NotesPage';
+import { useUpdateAvailable, BUILD_TIME } from './lib/version';
 
 const VIEW_TABS: { id: ViewTab; label: string; short: string; icon: string }[] = [
   { id: 'graph', label: 'Network graph', short: 'Graph', icon: '⛓' },
@@ -26,11 +28,12 @@ export default function App() {
   const plan = useActivePlan();
   const settings = useStore((s) => s.settings);
   const settingsOpen = useStore((s) => s.ui.settingsOpen);
+  const page = useStore((s) => s.ui.page) ?? 'planner';
   return (
     <SolutionProvider plan={plan} settings={settings}>
       <div className="app">
         <Header />
-        <Main />
+        {page === 'notes' ? <NotesPage /> : <Main />}
       </div>
       {settingsOpen && <SettingsModal />}
     </SolutionProvider>
@@ -41,15 +44,25 @@ function Header() {
   const { plans, activeId, setActive, addPlan, removePlan, duplicatePlan, updatePlan, setUI, settings } = useStore();
   const [editing, setEditing] = useState<string | null>(null);
   const unlocked = Object.values(settings.unlockedAlts).filter(Boolean).length;
+  const page = useStore((s) => s.ui.page) ?? 'planner';
+  const noteCount = useStore((s) => s.notes.length);
+  const update = useUpdateAvailable();
   return (
     <header className="header">
-      <div className="brand">
+      <div className="brand" title={`Version ${new Date(BUILD_TIME).toLocaleString()}`}>
         <span className="brand-mark">F</span>
         <span>FICSIT Planner</span>
       </div>
       <nav className="plan-tabs">
         {plans.map((p) => (
-          <div key={p.id} className={'plan-tab' + (p.id === activeId ? ' active' : '')} onClick={() => setActive(p.id)}>
+          <div
+            key={p.id}
+            className={'plan-tab' + (p.id === activeId && page === 'planner' ? ' active' : '')}
+            onClick={() => {
+              setActive(p.id);
+              setUI({ page: 'planner' });
+            }}
+          >
             {editing === p.id ? (
               <input
                 autoFocus
@@ -90,6 +103,25 @@ function Header() {
         </button>
       </nav>
       <div className="header-right">
+        {update && (
+          <button
+            className="chip update"
+            title="A newer version of the planner has been published"
+            onClick={async () => {
+              await saveNow();
+              location.reload();
+            }}
+          >
+            ↻ New version: reload
+          </button>
+        )}
+        <button
+          className={'chip notes-btn' + (page === 'notes' ? ' on' : '')}
+          onClick={() => setUI({ page: page === 'notes' ? 'planner' : 'notes' })}
+          title="Your notes"
+        >
+          📝 Notes{noteCount ? ` (${noteCount})` : ''}
+        </button>
         <CloudChip />
         <button className="chip" onClick={() => setUI({ settingsOpen: true, settingsTab: 'alts' })} title="Tier, unlocked alternates, MAM research, clock precision">
           Tier {settings.tier} · {unlocked} alternate{unlocked === 1 ? '' : 's'} · ⚙ Unlocks & settings
@@ -108,7 +140,7 @@ function CloudChip() {
     saving: ['☁ Saving…', '', 'Saving to GitHub'],
     unsaved: ['☁ Saving soon…', '', 'Your change will save to GitHub in a few seconds'],
     saved: ['☁ Saved', 'good', time ? `Saved to GitHub ${time}` : 'Saved to GitHub'],
-    readonly: ['☁ Not saving', 'warn', 'This browser loads your GitHub save but can’t save changes. Click to connect it.'],
+    readonly: ['☁ Auto-save off', 'warn', 'Changes are only kept in this browser. Click to turn on auto-save to GitHub.'],
     offline: ['☁ Offline', 'warn', 'Can’t reach GitHub. Changes are kept in this browser and will save when you’re back online.'],
     error: ['⚠ Save failed', 'bad', cloud.message ?? 'Saving to GitHub failed'],
   };
