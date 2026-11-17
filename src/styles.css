@@ -280,6 +280,7 @@ details.sub summary { cursor: pointer; color: var(--muted); margin-bottom: 6px; 
 .steps { margin: 6px 0 10px; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
 .steps code, .form code { background: var(--panel3); padding: 0 5px; border-radius: 4px; }
 .key-input { flex: 1; font-family: ui-monospace, monospace; }
+.name-input { width: 220px; }
 .sync-status { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 8px; background: var(--panel2); border: 1px solid var(--border); }
 .sync-status.good { border-color: rgba(108, 192, 112, 0.5); }
 .sync-status.warn { border-color: rgba(227, 179, 65, 0.5); }
@@ -338,3 +339,8 @@ a { color: var(--accent); }
 .calc-key.op { color: var(--accent); }
 .calc-key.fn { color: var(--muted); }
 .calc-key.eq { background: var(--accent); border-color: var(--accent); color: #1b1d21; font-weight: 700; }
+
+/* changes from someone else */
+.sync-toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: 40px; z-index: 95; display: flex; align-items: center; gap: 10px; max-width: min(460px, calc(100vw - 32px)); padding: 10px 14px; background: var(--panel3); border: 1px solid var(--good); border-radius: 8px; box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5); cursor: pointer; animation: toast-in 0.18s ease-out; }
+.sync-toast .arrow { color: var(--good); font-weight: 700; }
+@keyframes toast-in { from { opacity: 0; transform: translate(-50%, 8px); } to { opacity: 1; transform: translate(-50%, 0); } }

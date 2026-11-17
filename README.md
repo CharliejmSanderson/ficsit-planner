@@ -29,6 +29,15 @@ Every browser loads that file when the planner opens. A browser you've connected
 access to this repo only, with **Contents: Read and write**. It stays in that browser and is never committed.
 Saves go to the `saves` branch, so they don't trigger a redeploy. *Save & sync* also has backup export/import.
 
+### Sharing with a friend
+
+Two (or more) people can use the planner at once. Give your friend the link and a second access key made the
+same way as yours (*Save & sync → Share with a friend* has the steps). Every open planner checks GitHub every
+15 seconds and when you return to the tab, and combines the other person's changes with yours: different
+factories, different outputs in the same factory, notes and unlocks all merge, and a small note says who changed
+what. If you both change the very same value at once, the later edit wins. Each browser remembers the last
+version it saw on GitHub, so edits made just before closing a tab still combine correctly next time.
+
 For offline use, `npm run build` writes a single self-contained file to `dist/index.html`.
 
 ## What it does

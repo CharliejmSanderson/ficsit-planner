@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { useStore, type SettingsTab } from '../lib/store';
-import { useCloud, connect, disconnect, saveNow, sync, restoreBackup, dismissBackup, REPO } from '../lib/cloud';
+import { useCloud, connect, disconnect, saveNow, sync, restoreBackup, dismissBackup, REPO, POLL_CONNECTED } from '../lib/cloud';
+import { getName, setName } from '../lib/identity';
 import { RECIPES, BUILDINGS, EXTRACTORS, itemName, type Purity } from '../lib/gamedata';
 import { ItemIcon, BuildingIcon } from './ItemIcon';
 import { RecipeLine } from './side/RecipesPanel';
@@ -233,6 +234,9 @@ function SyncPanel() {
   const [key, setKey] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [name, setNameState] = useState(getName);
+  const [copied, setCopied] = useState(false);
+  const siteUrl = location.origin + location.pathname;
   const when = cloud.lastSaved ? new Date(cloud.lastSaved).toLocaleString() : null;
   const repoUrl = `https://github.com/${REPO.owner}/${REPO.name}/blob/${REPO.branch}/${REPO.path}`;
 
@@ -241,7 +245,8 @@ function SyncPanel() {
   if (cloud.state === 'loading') headline = 'Loading your save from GitHub…';
   else if (cloud.state === 'error') headline = cloud.message ?? 'Something went wrong talking to GitHub.';
   else if (cloud.state === 'offline') headline = 'Can’t reach GitHub right now. Your changes are kept in this browser and will save when you’re back online.';
-  else if (cloud.connected) headline = `Auto-save is on. Every change saves to GitHub a few seconds after you make it.${when ? ` Last saved ${when}.` : ''}`;
+  else if (cloud.connected)
+    headline = `Auto-save is on. Every change saves to GitHub a few seconds after you make it, and changes from anyone else using the planner show up within ${POLL_CONNECTED / 1000} seconds.${when ? ` Last saved ${when}.` : ''}`;
   else headline = 'This browser loads your saved factories from GitHub, but changes made here aren’t saved there yet.';
 
   return (
@@ -289,9 +294,54 @@ function SyncPanel() {
             Disconnect this browser
           </button>
         </div>
+      ) : null}
+
+      {cloud.connected ? (
+        <>
+          <h3>Share with a friend</h3>
+          <p className="small">You can both edit at the same time. Each of you sees the other’s changes within about {POLL_CONNECTED / 1000} seconds, without reloading.</p>
+          <ol className="steps small">
+            <li>
+              Make a second key for them, the same way you made yours:{' '}
+              <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noreferrer">
+                new fine-grained token
+              </a>
+              . Name it <code>FICSIT Planner (friend)</code>, choose only the <code>{REPO.name}</code> repo, and set <b>Contents</b> to <b>Read and write</b>.
+            </li>
+            <li>
+              Send them the planner link{' '}
+              <button
+                className="link"
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(siteUrl);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                  } catch {
+                    prompt('Copy this link:', siteUrl);
+                  }
+                }}
+              >
+                {copied ? 'copied ✓' : 'copy link'}
+              </button>{' '}
+              and the key, in a private message.
+            </li>
+            <li>
+              They open the link, click <b>☁ Auto-save off</b>, paste the key, press <b>Connect</b> and type their name.
+            </li>
+          </ol>
+          <p className="small muted">
+            If you both change the same thing at the same moment, the later change wins; everything else is combined. To stop sharing, delete their key on GitHub
+            (Settings → Developer settings → Fine-grained tokens): yours keeps working. A key can change any file in this repo, including the planner itself, so
+            only give one to someone you trust.
+          </p>
+        </>
       ) : (
         <>
           <h3>Turn on auto-save (one-time setup)</h3>
+          <p className="small">
+            <b>Got a key from a friend?</b> Skip to the box below, paste it and press Connect.
+          </p>
           <ol className="steps small">
             <li>
               Open{' '}
@@ -340,11 +390,26 @@ function SyncPanel() {
           </div>
           {err && <div className="small bad-text">{err}</div>}
           <p className="small muted">
-            The key is kept only in this browser and can only change files in the {REPO.name} repo. If this browser already has factories and GitHub has none,
-            they’re uploaded; if GitHub has a newer save, it’s loaded.
+            The key is kept only in this browser and can only change files in the {REPO.name} repo. Connecting combines anything made in this browser with
+            the save on GitHub.
           </p>
         </>
       )}
+      <h3>Your name</h3>
+      <div className="row">
+        <input
+          className="name-input"
+          placeholder="e.g. Charlie"
+          maxLength={40}
+          value={name}
+          onChange={(e) => {
+            setNameState(e.target.value);
+            setName(e.target.value);
+          }}
+        />
+      </div>
+      <p className="small muted">Shown to anyone else using the planner when you change something, like “Charlie changed Steel Mill”. Kept in this browser only.</p>
+
       <p className="small muted">
         Your save is a file in your repo:{' '}
         <a href={repoUrl} target="_blank" rel="noreferrer">

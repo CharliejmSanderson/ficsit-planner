@@ -13,7 +13,7 @@ import { InputsPanel } from './components/side/InputsPanel';
 import { RecipesPanel } from './components/side/RecipesPanel';
 import { ByproductsPanel } from './components/side/ByproductsPanel';
 import { SettingsModal } from './components/SettingsModal';
-import { useCloud, saveNow, type CloudState } from './lib/cloud';
+import { useCloud, saveNow, dismissIncoming, type CloudState } from './lib/cloud';
 import { NotesPage } from './components/NotesPage';
 import { Calculator } from './components/Calculator';
 import { useUpdateAvailable, BUILD_TIME } from './lib/version';
@@ -37,6 +37,7 @@ export default function App() {
         {page === 'notes' ? <NotesPage /> : <Main />}
       </div>
       <Calculator />
+      <SyncToast />
       {settingsOpen && <SettingsModal />}
     </SolutionProvider>
   );
@@ -137,6 +138,23 @@ function Header() {
   );
 }
 
+/** a brief note when someone else's changes arrive */
+function SyncToast() {
+  const incoming = useCloud((s) => s.incoming);
+  useEffect(() => {
+    if (!incoming) return;
+    const t = setTimeout(dismissIncoming, 8000);
+    return () => clearTimeout(t);
+  }, [incoming]);
+  if (!incoming) return null;
+  return (
+    <div className="sync-toast small" role="status" onClick={dismissIncoming} title="Click to dismiss">
+      <span className="arrow">↓</span>
+      <span>{incoming.text}</span>
+    </div>
+  );
+}
+
 function CloudChip() {
   const cloud = useCloud();
   const setUI = useStore((s) => s.setUI);
@@ -145,7 +163,7 @@ function CloudChip() {
     loading: ['☁ Loading save…', '', 'Loading your save from GitHub'],
     saving: ['☁ Saving…', '', 'Saving to GitHub'],
     unsaved: ['☁ Saving soon…', '', 'Your change will save to GitHub in a few seconds'],
-    saved: ['☁ Saved', 'good', time ? `Saved to GitHub ${time}` : 'Saved to GitHub'],
+    saved: ['☁ Saved', 'good', `${time ? `Saved to GitHub ${time}` : 'Saved to GitHub'}. Changes from anyone else using the planner appear automatically.`],
     readonly: ['☁ Auto-save off', 'warn', 'Changes are only kept in this browser. Click to turn on auto-save to GitHub.'],
     offline: ['☁ Offline', 'warn', 'Can’t reach GitHub. Changes are kept in this browser and will save when you’re back online.'],
     error: ['⚠ Save failed', 'bad', cloud.message ?? 'Saving to GitHub failed'],

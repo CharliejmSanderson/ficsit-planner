@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { DEFAULT_SETTINGS, newPlan, uid, type Note, type Plan, type Settings } from './types';
+import { stamp } from './identity';
 
 export type ViewTab = 'graph' | 'tree' | 'items' | 'buildings';
 export type SideTab = 'outputs' | 'inputs' | 'recipes' | 'byproducts';
@@ -46,8 +47,8 @@ interface State {
   addNote: () => string;
   updateNote: (id: string, patch: Partial<Pick<Note, 'title' | 'text'>>) => void;
   deleteNote: (id: string) => void;
-  /** replace factories and unlocks with a save (from GitHub), keeping its timestamp */
-  applySave: (data: SaveData, savedAt: number) => void;
+  /** take factories, notes and unlocks combined with a GitHub save (keeps which factory you're looking at) */
+  applyRemote: (data: Pick<SaveData, 'settings' | 'plans' | 'notes'>, savedAt: number) => void;
 }
 
 /** change time that always moves forward, even for two changes in the same millisecond */
@@ -83,29 +84,36 @@ export const useStore = create<State>()(
         set((st) => {
           const s = clone(st.settings);
           fn(s);
-          return { settings: s, savedAt: bump(st) };
+          const t = bump(st);
+          s.updatedAt = t;
+          return { settings: s, savedAt: t };
         }),
       updatePlan: (fn) =>
-        set((st) => ({
-          plans: st.plans.map((p) => {
-            if (p.id !== st.activeId) return p;
-            const c = clone(p);
-            fn(c);
-            return c;
-          }),
-          savedAt: bump(st),
-        })),
+        set((st) => {
+          const t = bump(st);
+          return {
+            plans: st.plans.map((p) => {
+              if (p.id !== st.activeId) return p;
+              const c = clone(p);
+              fn(c);
+              return stamp(c, t);
+            }),
+            savedAt: t,
+          };
+        }),
       addPlan: () =>
         set((st) => {
-          const p = newPlan(`Factory ${st.plans.length + 1}`);
-          return { plans: [...st.plans, p], activeId: p.id, savedAt: bump(st) };
+          const t = bump(st);
+          const p = stamp(newPlan(`Factory ${st.plans.length + 1}`), t);
+          return { plans: [...st.plans, p], activeId: p.id, savedAt: t };
         }),
       duplicatePlan: () =>
         set((st) => {
           const cur = st.plans.find((p) => p.id === st.activeId);
           if (!cur) return {};
-          const p = { ...clone(cur), id: newPlan().id, name: cur.name + ' (copy)' };
-          return { plans: [...st.plans, p], activeId: p.id, savedAt: bump(st) };
+          const t = bump(st);
+          const p = stamp({ ...clone(cur), id: newPlan().id, name: cur.name + ' (copy)' }, t);
+          return { plans: [...st.plans, p], activeId: p.id, savedAt: t };
         }),
       removePlan: (id) =>
         set((st) => {
@@ -116,17 +124,30 @@ export const useStore = create<State>()(
         }),
       setActive: (id) => set({ activeId: id }),
       setUI: (patch) => set((st) => ({ ui: { ...st.ui, ...patch } })),
-      importAll: (data) => set((st) => ({ ...normalise(data), savedAt: bump(st) })),
-      applySave: (data, savedAt) => set(() => ({ ...normalise(data), savedAt })),
+      importAll: (data) =>
+        set((st) => {
+          // an import replaces everything, so mark it all as just edited
+          const t = bump(st);
+          const n = normalise(clone(data));
+          n.settings.updatedAt = t;
+          n.plans.forEach((p) => stamp(p, t));
+          n.notes.forEach((x) => stamp(x, t));
+          return { ...n, savedAt: t };
+        }),
+      applyRemote: (data, savedAt) =>
+        set((st) => {
+          const n = normalise({ ...data, activeId: st.activeId });
+          return { settings: n.settings, plans: n.plans, notes: n.notes, activeId: n.activeId, savedAt: Math.max(st.savedAt, savedAt) };
+        }),
       addNote: () => {
         const t = Date.now();
-        const note: Note = { id: uid(), title: '', text: '', createdAt: t, updatedAt: t };
+        const note: Note = stamp({ id: uid(), title: '', text: '', createdAt: t, updatedAt: t }, t);
         set((st) => ({ notes: [note, ...st.notes], savedAt: bump(st) }));
         return note.id;
       },
       updateNote: (id, patch) =>
         set((st) => ({
-          notes: st.notes.map((n) => (n.id === id ? { ...n, ...patch, updatedAt: Date.now() } : n)),
+          notes: st.notes.map((n) => (n.id === id ? stamp({ ...n, ...patch }, Date.now()) : n)),
           savedAt: bump(st),
         })),
       deleteNote: (id) => set((st) => ({ notes: st.notes.filter((n) => n.id !== id), savedAt: bump(st) })),

@@ -51,6 +51,9 @@ export interface Plan {
   selfPower: boolean;
   allowConverter: boolean;
   allowUnpackage: boolean;
+  /** when this factory was last edited, and the name of whoever edited it (for combining edits) */
+  updatedAt?: number;
+  updatedBy?: string;
 }
 
 export interface Note {
@@ -59,6 +62,7 @@ export interface Note {
   text: string;
   createdAt: number;
   updatedAt: number;
+  updatedBy?: string;
 }
 
 export interface Settings {
@@ -73,6 +77,8 @@ export interface Settings {
   minerId: string;
   purity: Purity;
   minerClock: number;
+  /** when settings last changed (for combining edits) */
+  updatedAt?: number;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
